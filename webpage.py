@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template_string, redirect
+from flask_sqlalchemy import SQLAlchemy
 import os
 import json
 import random
