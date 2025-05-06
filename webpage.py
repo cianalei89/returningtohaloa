@@ -199,7 +199,7 @@ THANKS_PAGE = """
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 311px;
+      width: 315px;
       cursor: grab;
       z-index: 10;
       transform: translate(-26%, -54.3%);
