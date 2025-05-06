@@ -1,38 +1,44 @@
-from flask import Flask, request, jsonify, render_template_string, redirect
-from flask_sqlalchemy import SQLAlchemy
-import os
-import json
-import random
-
-
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
+# ----------------- Model -----------------
 class Entry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     image = db.Column(db.String(255))
 
-# Safe way to initialize
-with app.app_context():
+# ----------------- Initialize DB -----------------
+@app.before_first_request
+def create_tables():
     db.create_all()
 
-# Replace load_data()
-def load_data():
-    return [entry.content for entry in Entry.query.all()]
+# ----------------- Routes -----------------
+@app.route("/submit", methods=["GET", "POST"])
+def submit():
+    if request.method == "POST":
+        name = request.form.get("name")
+        if name:
+            image_url = random.choice([
+                "https://i.postimg.cc/G2TbnCRp/00-F48097-DE78-4-EE1-947-B-50-C115-FF5-B90.png",
+                "https://i.postimg.cc/CxwMBXGv/0-F574900-382-C-44-ED-BAD7-7-D2-D27-C30-D72.png"
+            ])
+            entry = Entry(name=name, image=image_url)
+            db.session.add(entry)
+            db.session.commit()
+        return redirect("/thanks")
+    
+    # Fetch entries only when needed
+    entries = Entry.query.all()
+    return jsonify([{"name": e.name, "image": e.image} for e in entries])
 
-# Replace save_data(data)
-def save_data(data):
-    # This example clears and replaces the data each time (like your overwrite logic)
-    Entry.query.delete()
-    for item in data:
-        db.session.add(Entry(content=item))
-    db.session.commit()
 
-entries = Entry.query.all()
+@app.route("/names")
+def names():
+    entries = Entry.query.all()
+    return jsonify([{"name": e.name, "image": e.image} for e in entries])
 
 # Preset image URLs (replace these with your own if desired)
 IMAGE_URLS = [
@@ -1197,17 +1203,6 @@ def next():
 @app.route('/loi')
 def loi():
     return render_template_string(loi_html)
-
-@app.route('/names')
-def get_names():
-   # Query all entries from the PostgreSQL database
-    all_entries = Entry.query.all()
-
-    # Convert them to a list of dictionaries
-    return jsonify([
-        {"name": entry.name, "image": entry.image}
-        for entry in all_entries
-    ])
 
 if __name__ == '__main__':
     app.run(debug=True)
