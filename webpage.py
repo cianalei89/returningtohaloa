@@ -4,22 +4,19 @@ import os
 import json
 import random
 
+
 app = Flask(__name__)
-DATA_FILE = 'data.json'
-
-
-# Connect to PostgreSQL via environment variable
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# Define a data model to replace JSON
 class Entry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    content = db.Column(db.Text, nullable=False)
+    name = db.Column(db.String(100))
+    image = db.Column(db.String(255))
 
-# Initialize database
+# Safe way to initialize
 with app.app_context():
     db.create_all()
 
