@@ -6,23 +6,41 @@ import random
 app = Flask(__name__)
 DATA_FILE = 'data.json'
 
+
+# Connect to PostgreSQL via environment variable
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+
+# Define a data model to replace JSON
+class Entry(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+
+# Initialize database
+with app.app_context():
+    db.create_all()
+
+# Replace load_data()
+def load_data():
+    return [entry.content for entry in Entry.query.all()]
+
+# Replace save_data(data)
+def save_data(data):
+    # This example clears and replaces the data each time (like your overwrite logic)
+    Entry.query.delete()
+    for item in data:
+        db.session.add(Entry(content=item))
+    db.session.commit()
+
+entries = Entry.query.all()
+
 # Preset image URLs (replace these with your own if desired)
 IMAGE_URLS = [
     "https://i.postimg.cc/G2TbnCRp/00-F48097-DE78-4-EE1-947-B-50-C115-FF5-B90.png",
     "https://i.postimg.cc/CxwMBXGv/0-F574900-382-C-44-ED-BAD7-7-D2-D27-C30-D72.png",
 ]
-
-def load_data():
-    if not os.path.exists(DATA_FILE):
-        return []
-    with open(DATA_FILE, 'r') as f:
-        return json.load(f)
-
-def save_data(data):
-    with open(DATA_FILE, 'w') as f:
-        json.dump(data, f)
-
-entries = load_data()
 
 # --- FORM PAGE ---
 FORM_PAGE = """
@@ -1142,8 +1160,11 @@ def submit():
     if name:
         rand_index = random.randint(0, 1)
         image_url = IMAGE_URLS[rand_index]
-        entries.append({'name': name, 'image': image_url})
-        save_data(entries)
+        
+        # Save to PostgreSQL
+        new_entry = Entry(name=name, image=image_url)
+        db.session.add(new_entry)
+        db.session.commit()
     return redirect('/thanks')
 
 @app.route('/thanks')
@@ -1181,7 +1202,14 @@ def loi():
 
 @app.route('/names')
 def get_names():
-    return jsonify(entries)
+   # Query all entries from the PostgreSQL database
+    all_entries = Entry.query.all()
+
+    # Convert them to a list of dictionaries
+    return jsonify([
+        {"name": entry.name, "image": entry.image}
+        for entry in all_entries
+    ])
 
 if __name__ == '__main__':
     app.run(debug=True)
