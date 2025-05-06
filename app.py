@@ -11,13 +11,14 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 # ----------------- Initialize DB -----------------
-with app.app_context():
-    db.create_all()
 # ----------------- Model -----------------
 class Entry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     image = db.Column(db.String(255))
+
+with app.app_context():
+    db.create_all()
 
 # ----------------- Routes -----------------
 @app.route("/submit", methods=["GET", "POST"])
