@@ -1162,18 +1162,6 @@ poi_html = """
 def index():
     return render_template_string(FORM_PAGE)
 
-@app.route('/submit', methods=['POST'])
-def submit():
-    name = request.form.get('name')
-    if name:
-        rand_index = random.randint(0, 1)
-        image_url = IMAGE_URLS[rand_index]
-        
-        # Save to PostgreSQL
-        new_entry = Entry(name=name, image=image_url)
-        db.session.add(new_entry)
-        db.session.commit()
-    return redirect('/thanks')
 
 @app.route('/thanks')
 def thanks():
