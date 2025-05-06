@@ -33,10 +33,6 @@ def submit():
             db.session.add(entry)
             db.session.commit()
         return redirect("/thanks")
-    
-    # Fetch entries only when needed
-    entries = Entry.query.all()
-    return jsonify([{"name": e.name, "image": e.image} for e in entries])
 
 
 @app.route("/names")
